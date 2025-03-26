@@ -161,10 +161,21 @@ namespace DatabaseConnector.Services
 				{
 					try
 					{
-
 						if (currentPropertyInfo.PropertyType == typeof(bool))
 						{
 							currentPropertyInfo.SetValue(item, dataReader.GetBoolean(currentPropertyInfo.Name));
+						}
+						if (currentPropertyInfo.PropertyType == typeof(DateTime))
+						{
+							if (dataReader[currentPropertyInfo.Name].GetType() == typeof(DateTime))
+							{
+								currentPropertyInfo.SetValue(item, dataReader[currentPropertyInfo.Name]);
+							}
+							else //Parses string of DateTime to DateTime
+							{
+								currentPropertyInfo.SetValue(item, DateTime.Parse(dataReader[currentPropertyInfo.Name].ToString()!));
+							}
+							
 						}
 						else
 						{
