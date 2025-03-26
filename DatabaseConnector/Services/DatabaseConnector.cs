@@ -30,6 +30,11 @@ namespace DatabaseConnector.Services
 					_database = new SqlServerDatabaseLink(DatabaseString);
 
 					break;
+
+				case DatabaseType.Sqlite:
+					_database = new SqliteDatabaseLink(DatabaseString);
+
+					break;
 			}
 		}
 

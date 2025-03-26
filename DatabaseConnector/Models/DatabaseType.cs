@@ -9,6 +9,7 @@ namespace DatabaseConnector.Models
 	public enum DatabaseType
 	{
 		MySql,
-		SqlServer
+		SqlServer,
+		Sqlite
 	}
 }
