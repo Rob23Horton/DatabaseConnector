@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using DatabaseConnector.Models;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -15,6 +16,20 @@ namespace DatabaseConnector.Services
 		public SqlServerDatabaseLink(string DatabaseString)
 		{
 			_connection = new SqlConnection(DatabaseString);
+		}
+
+		public string BuildCreateTableQuery(List<Property> Properties)
+		{
+			string query = "";
+
+			//Stupid Dumb Dumb way of doing it but who tf cares (Not me XD)
+			Properties = Properties.OrderByDescending(p => p.IsPrimaryKey).ToList();
+			//Adds the primary keys to the query
+			Properties.Where(p => p.IsPrimaryKey).ToList().ForEach(p => query = Properties.Last() == p ? $"{query} {p.Name} {p.Type} IDENTITY(1,1) PRIMARY KEY" : $"{query} {p.Name} {p.Type} IDENTITY(1,1) PRIMARY KEY,");
+			//Adds the non primary keys to the query
+			Properties.Where(p => !p.IsPrimaryKey).ToList().ForEach(p => query = Properties.Last() == p ? $"{query} {p.Name} {p.Type}" : $"{query} {p.Name} {p.Type},");
+
+			return query;
 		}
 
 		public bool Connect()

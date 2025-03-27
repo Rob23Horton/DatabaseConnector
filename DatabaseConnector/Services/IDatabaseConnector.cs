@@ -9,6 +9,7 @@ namespace DatabaseConnector.Services
 {
 	public interface IDatabaseConnector
 	{
+		public void CreateTable<T>();
 		public List<T> Select<T>(Select SelectRequest);
 	}
 }
