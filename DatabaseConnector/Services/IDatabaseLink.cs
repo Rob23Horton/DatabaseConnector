@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data.Common;
+using DatabaseConnector.Models;
 
 namespace DatabaseConnector.Services
 {
@@ -13,5 +9,6 @@ namespace DatabaseConnector.Services
 		public DbDataReader ReadExecute(string Query);
 		public void Execute(string Query);
 		public void Disconnect();
+		public string BuildCreateTableQuery(List<Property> Properties);
 	}
 }

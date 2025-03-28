@@ -1,16 +1,9 @@
 ﻿using DatabaseConnector.Attributes;
 using DatabaseConnector.Models;
 using MySqlConnector;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DatabaseConnector.Services
 {
@@ -91,7 +84,7 @@ namespace DatabaseConnector.Services
 			string table = tableAttribute.Name;
 
 
-			
+
 			string values = "";
 			string joins = "";
 
@@ -133,8 +126,8 @@ namespace DatabaseConnector.Services
 			{
 				values = values.Substring(0, values.Length - 2);
 			}
-					
-			
+
+
 
 			//Creates where string
 			string wheres = GetWheres(SelectRequest.Wheres);
@@ -175,7 +168,7 @@ namespace DatabaseConnector.Services
 							{
 								currentPropertyInfo.SetValue(item, DateTime.Parse(dataReader[currentPropertyInfo.Name].ToString()!));
 							}
-							
+
 						}
 						else
 						{
@@ -195,6 +188,71 @@ namespace DatabaseConnector.Services
 			_database.Disconnect();
 
 			return result;
+		}
+
+		public void CreateTable<T>()
+		{
+			Type classType = typeof(T);
+			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
+
+			//Gets the table attribute and gets the table name value from it
+			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			if (tableAttribute is null)
+			{
+				throw new Exception("Class must have table attribute!");
+			}
+
+			//			CREATE TABLE "tblFile"(
+			//				"FileId"    INTEGER NOT NULL,
+			//				"Name"	TEXT NOT NULL,
+			//				PRIMARY KEY("FileId" AUTOINCREMENT)
+			//			);
+
+			List<Property> properties = new List<Property>();
+
+			foreach (PropertyInfo propertyInfo in ClassPropertyInfo)
+			{
+				SourceTable? sourceAttribute = (SourceTable?)propertyInfo.GetCustomAttribute(typeof(SourceTable), false);
+
+				if (sourceAttribute is not null && sourceAttribute.TableName != tableAttribute.Name)
+				{
+					continue;
+				}
+
+				Property newProperty = new Property();
+
+				//Name which is used as the property name on the table
+				newProperty.Name = propertyInfo.Name;
+				newProperty.Type = propertyInfo.PropertyType.Name.ToString();
+
+				//Adds As value to query so that it can be found when creating object
+				NameCast? castAttribute = (NameCast?)propertyInfo.GetCustomAttribute(typeof(NameCast), false);
+				if (castAttribute is not null)
+				{
+					newProperty.Name = castAttribute.Name;
+				}
+
+				PropertyType? typeAttribute = (PropertyType?)propertyInfo.GetCustomAttribute(typeof(PropertyType), false);
+				if (typeAttribute is not null)
+				{
+					newProperty.Type = typeAttribute.Type;
+
+					if (typeAttribute.IsPrimaryKey)
+					{
+						newProperty.IsPrimaryKey = true;
+					}
+				}
+
+				properties.Add(newProperty);
+			}
+
+			//Creates query
+			string query = $"CREATE TABLE {tableAttribute.Name} ({_database.BuildCreateTableQuery(properties)});";
+
+			Console.WriteLine(query);
+
+			//Executes query and returns a datareader for the data
+			_database.Execute(query);
 		}
 	}
 }

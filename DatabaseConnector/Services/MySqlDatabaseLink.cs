@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DatabaseConnector.Models;
 using MySqlConnector;
 
 namespace DatabaseConnector.Services
@@ -15,6 +16,20 @@ namespace DatabaseConnector.Services
 		public MySqlDatabaseLink(string DatabaseString)
 		{
 			this._connection = new MySqlConnection(DatabaseString);
+		}
+
+		public string BuildCreateTableQuery(List<Property> Properties)
+		{
+			string query = "";
+
+			//Stupid Dumb Dumb way of doing it but who tf cares (Not me XD)
+			Properties = Properties.OrderByDescending(p => p.IsPrimaryKey).ToList();
+			//Adds the primary keys to the query
+			Properties.Where(p => p.IsPrimaryKey).ToList().ForEach(p => query = Properties.Last() == p ? $"{query} {p.Name} {p.Type} PRIMARY KEY AUTO_INCREMENT" : $"{query} {p.Name} {p.Type} PRIMARY KEY AUTO_INCREMENT,");
+			//Adds the non primary keys to the query
+			Properties.Where(p => !p.IsPrimaryKey).ToList().ForEach(p => query = Properties.Last() == p ? $"{query} {p.Name} {p.Type}" : $"{query} {p.Name} {p.Type},");
+
+			return query;
 		}
 
 		public bool Connect()
