@@ -62,6 +62,10 @@ namespace DatabaseConnector.Services
 				{
 					query += $"{intVal} AND ";
 				}
+				else if (where.Value is long longVal)
+				{
+					query += $"{longVal} AND ";
+				}
 				else if (where.Value is bool boolVal)
 				{
 					query += $"b'{(boolVal ? '1' : '0')}' AND ";
@@ -217,12 +221,6 @@ namespace DatabaseConnector.Services
 				throw new Exception("Class must have table attribute!");
 			}
 
-			//			CREATE TABLE "tblFile"(
-			//				"FileId"    INTEGER NOT NULL,
-			//				"Name"	TEXT NOT NULL,
-			//				PRIMARY KEY("FileId" AUTOINCREMENT)
-			//			);
-
 			List<Property> properties = new List<Property>();
 
 			foreach (PropertyInfo propertyInfo in ClassPropertyInfo)
@@ -268,6 +266,59 @@ namespace DatabaseConnector.Services
 
 			//Executes query and returns a datareader for the data
 			_database.Execute(query);
+		}
+
+		public void Insert<T>(T Item)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Update<T>(T Item, Select UpdateRequest)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Delete<T>(T Item)
+		{
+			Type classType = typeof(T);
+			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
+
+			//Gets the table attribute and gets the table name value from it
+			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			if (tableAttribute is null)
+			{
+				throw new Exception("Class must have table attribute!");
+			}
+
+			string table = tableAttribute.Name;
+
+			Where PrimaryKeyWhere = new Where("", "", "");
+
+			foreach (PropertyInfo property in ClassPropertyInfo)
+			{
+				PropertyType? typeAttribute = (PropertyType?)property.GetCustomAttribute(typeof(PropertyType), false);
+				if (typeAttribute is not null && typeAttribute.IsPrimaryKey)
+				{
+					string Name = property.Name;
+
+					NameCast? castAttribute = (NameCast?)property.GetCustomAttribute(typeof(NameCast), false);
+					if (castAttribute is not null)
+					{
+						Name = castAttribute.Name;
+					}
+
+					PrimaryKeyWhere = new Where("", Name, property.GetValue(Item)!);
+
+					break;
+				}
+			}
+
+			string where = GetWheres(table, new List<Where>() { PrimaryKeyWhere });
+
+			string query = $"DELETE FROM {table} {where}";
+
+			_database.Execute(query);
+
 		}
 	}
 }
