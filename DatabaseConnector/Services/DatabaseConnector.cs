@@ -1,8 +1,10 @@
 ﻿using DatabaseConnector.Attributes;
 using DatabaseConnector.Models;
 using MySqlConnector;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Net.Http.Headers;
 using System.Reflection;
 
 namespace DatabaseConnector.Services
@@ -270,7 +272,105 @@ namespace DatabaseConnector.Services
 
 		public void Insert<T>(T Item)
 		{
-			throw new NotImplementedException();
+			Insert<T>(Item, false);
+		}
+
+		public void Insert<T>(T Item, bool InsertPrimaryKey)
+		{
+			Type classType = typeof(T);
+			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
+
+			//Gets the table attribute and gets the table name value from it
+			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			if (tableAttribute is null)
+			{
+				throw new Exception("Class must have table attribute!");
+			}
+
+			string table = tableAttribute.Name;
+
+			string properties = "";
+			string values = "";
+
+			foreach (PropertyInfo propertyInfo in ClassPropertyInfo)
+			{
+				string Name = propertyInfo.Name;
+
+				//Checks if the property should be included
+
+				if (!InsertPrimaryKey)
+				{
+					//Don't include if it's a primary key
+					PropertyType? primaryKeyAttribute = (PropertyType?)propertyInfo.GetCustomAttribute(typeof(PropertyType), false);
+					if (primaryKeyAttribute is not null && primaryKeyAttribute.IsPrimaryKey)
+					{
+						continue;
+					}
+				}
+
+				//If there are joins it's not part of this table
+				object[] joinAttributes = propertyInfo.GetCustomAttributes(typeof(Join), false);
+				if (joinAttributes.Length > 0)
+				{
+					continue;
+				}
+
+				//If table is different then it's not part of the table
+				SourceTable? sourceAttribute = (SourceTable?)propertyInfo.GetCustomAttribute(typeof(SourceTable), false);
+				if (sourceAttribute is not null && sourceAttribute.TableName != table)
+				{
+					continue;
+				}
+
+
+				//Changes the name to the correct one for the insert
+				NameCast? castAttribute = (NameCast?)propertyInfo.GetCustomAttribute(typeof(NameCast), false);
+				if (castAttribute is not null)
+				{
+					Name = castAttribute.Name;
+				}
+
+				//Works out value type
+				object value = propertyInfo.GetValue(Item);
+				if (value is string strVal)
+				{
+					values += $"'{MySqlHelper.EscapeString(strVal)}', ";
+				}
+				else if (value is int intVal)
+				{
+					values += $"{intVal}, ";
+				}
+				else if (value is long longVal)
+				{
+					values += $"{longVal}, ";
+				}
+				else if (value is bool boolVal)
+				{
+					values += $"b'{(boolVal ? '1' : '0')}', ";
+				}
+				else if (value is DateTime dateVal)
+				{
+					values += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+				}
+				else //Skip if type is unsupported
+				{
+					continue;
+				}
+
+				properties += $"{Name}, ";
+			}
+
+			//Removes extra ', ' off the end off properties and values
+			if (values.Length > 0)
+			{
+				properties = properties.Substring(0, properties.Length - 2);
+				values = values.Substring(0, values.Length - 2);
+			}
+
+			string query = $"INSERT INTO {table} ({properties}) VALUES ({values})";
+
+			_database.Execute(query);
+
 		}
 
 		public void Update<T>(T Item, Select UpdateRequest)
