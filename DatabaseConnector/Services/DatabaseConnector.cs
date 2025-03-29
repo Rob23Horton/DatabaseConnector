@@ -31,14 +31,29 @@ namespace DatabaseConnector.Services
 			}
 		}
 
-		private string GetWheres(List<Where> Where)
+		private string GetWheres(string DefaultTable, List<Where> Where)
 		{
 			string query = "";
 
 			foreach (Where where in Where)
 			{
-				query += $"{where.Table}.{where.ValueName} = ";
+				//Fills in the blank table value
+				if (String.IsNullOrEmpty(where.Table))
+				{
+					where.Table = DefaultTable;
+				}
 
+				//Adding like or just =
+				if (where.IsLike)
+				{
+					query += $"{where.Table}.{where.ValueName} LIKE ";
+				}
+				else
+				{
+					query += $"{where.Table}.{where.ValueName} = ";
+				}
+
+				//Fills in the value
 				if (where.Value is string strVal)
 				{
 					query += $"'{MySqlHelper.EscapeString(strVal)}' AND ";
@@ -130,7 +145,7 @@ namespace DatabaseConnector.Services
 
 
 			//Creates where string
-			string wheres = GetWheres(SelectRequest.Wheres);
+			string wheres = GetWheres(table, SelectRequest.Wheres);
 
 
 			string query = $"SELECT {values} FROM {table} {joins} {wheres};";

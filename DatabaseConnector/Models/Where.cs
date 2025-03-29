@@ -14,9 +14,17 @@ namespace DatabaseConnector.Models
 			this.ValueName = ValueName;
 			this.Value = Value;
 		}
+		public Where(string Table, string ValueName, object Value, bool IsLike)
+		{
+			this.Table = Table;
+			this.ValueName = ValueName;
+			this.Value = Value;
+			this.IsLike = IsLike;
+		}
 
 		public string Table { get; set; }
 		public string ValueName { get; set; }
 		public object Value { get; set; }
+		public bool IsLike { get; set; }
 	}
 }

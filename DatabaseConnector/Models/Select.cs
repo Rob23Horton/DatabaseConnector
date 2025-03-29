@@ -30,6 +30,10 @@ namespace DatabaseConnector.Models
 		{
 			AddWhere(new Where(Table, ValueName, Value));
 		}
+		public void AddWhere(string Table, string ValueName, object Value, bool IsLike)
+		{
+			AddWhere(new Where(Table, ValueName, Value, IsLike));
+		}
 
 		public string Table { get; set; }
 		public List<Where> Wheres { get; set; } = new List<Where>();
