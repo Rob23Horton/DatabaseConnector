@@ -1,4 +1,5 @@
-﻿using DatabaseConnector.Attributes;
+﻿using Azure.Core;
+using DatabaseConnector.Attributes;
 using DatabaseConnector.Models;
 using MySqlConnector;
 using System.ComponentModel;
@@ -375,7 +376,103 @@ namespace DatabaseConnector.Services
 
 		public void Update<T>(T Item, Select UpdateRequest)
 		{
-			throw new NotImplementedException();
+			Type classType = typeof(T);
+			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
+
+			//Gets the table attribute and gets the table name value from it
+			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			if (tableAttribute is null)
+			{
+				throw new Exception("Class must have table attribute!");
+			}
+
+			string table = tableAttribute.Name;
+
+			string values = "";
+
+			foreach (PropertyInfo propertyInfo in ClassPropertyInfo)
+			{
+				string Name = propertyInfo.Name;
+
+				//Checks if the property should be included
+				//If there are joins it's not part of this table
+				object[] joinAttributes = propertyInfo.GetCustomAttributes(typeof(Join), false);
+				if (joinAttributes.Length > 0)
+				{
+					continue;
+				}
+				//If table is different then it's not part of the table
+				SourceTable? sourceAttribute = (SourceTable?)propertyInfo.GetCustomAttribute(typeof(SourceTable), false);
+				if (sourceAttribute is not null && sourceAttribute.TableName != table)
+				{
+					continue;
+				}
+
+
+				//Changes the name to the correct one for the insert
+				NameCast? castAttribute = (NameCast?)propertyInfo.GetCustomAttribute(typeof(NameCast), false);
+				if (castAttribute is not null)
+				{
+					Name = castAttribute.Name;
+				}
+
+
+				//If it's a primary key and isn't null then use it as a where statement
+				PropertyType? primaryKeyAttribute = (PropertyType?)propertyInfo.GetCustomAttribute(typeof(PropertyType), false);
+				if (primaryKeyAttribute is not null && primaryKeyAttribute.IsPrimaryKey)
+				{
+					if (propertyInfo.GetValue(Item) is not null)
+					{
+						UpdateRequest.AddWhere(Name, propertyInfo.GetValue(Item));
+					}
+
+					continue;
+				}
+
+
+				//Works out value type
+				object value = propertyInfo.GetValue(Item);
+
+				string currentValue = "";
+				if (value is string strVal)
+				{
+					currentValue = $"'{MySqlHelper.EscapeString(strVal)}', ";
+				}
+				else if (value is int intVal)
+				{
+					currentValue = $"{intVal}, ";
+				}
+				else if (value is long longVal)
+				{
+					currentValue = $"{longVal}, ";
+				}
+				else if (value is bool boolVal)
+				{
+					currentValue = $"b'{(boolVal ? '1' : '0')}', ";
+				}
+				else if (value is DateTime dateVal)
+				{
+					currentValue = $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+				}
+				else //Skip if type is unsupported
+				{
+					continue;
+				}
+
+				values += $"{Name} = {currentValue}";
+			}
+
+			//Removes extra ', ' off the end off properties and values
+			if (values.Length > 0)
+			{
+				values = values.Substring(0, values.Length - 2);
+			}
+
+			string where = GetWheres(table, UpdateRequest.Wheres);
+
+			string query = $"UPDATE {table} SET {values} {where}";
+
+			_database.Execute(query);
 		}
 
 		public void Delete<T>(T Item)
