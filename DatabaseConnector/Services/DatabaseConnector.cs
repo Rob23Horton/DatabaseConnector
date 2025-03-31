@@ -374,7 +374,7 @@ namespace DatabaseConnector.Services
 
 		}
 
-		public void Update<T>(T Item, Select UpdateRequest)
+		public void Update<T>(T Item, Update UpdateRequest)
 		{
 			Type classType = typeof(T);
 			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
@@ -421,11 +421,29 @@ namespace DatabaseConnector.Services
 				PropertyType? primaryKeyAttribute = (PropertyType?)propertyInfo.GetCustomAttribute(typeof(PropertyType), false);
 				if (primaryKeyAttribute is not null && primaryKeyAttribute.IsPrimaryKey)
 				{
-					if (propertyInfo.GetValue(Item) is not null)
+					if (propertyInfo.PropertyType == typeof(int) || propertyInfo.PropertyType == typeof(long)) //If the type is int or long
+					{
+						int intVal = int.Parse(propertyInfo.GetValue(Item)!.ToString()!);
+
+						//A Primary key shouldn't ever be 0
+						if (intVal != 0)
+						{
+							UpdateRequest.AddWhere(Name, intVal);
+						}
+					}
+					else if(propertyInfo.GetValue(Item) is not null && propertyInfo.GetValue(Item) != default)
 					{
 						UpdateRequest.AddWhere(Name, propertyInfo.GetValue(Item));
 					}
 
+					continue;
+				}
+
+
+				//Excludes the value if it hasn't been edited
+				//Has to be here due to it being after the primary key is added to the where statement
+				if (UpdateRequest.UseEditedValues && !UpdateRequest.EditedValues.Contains(Name))
+				{
 					continue;
 				}
 
