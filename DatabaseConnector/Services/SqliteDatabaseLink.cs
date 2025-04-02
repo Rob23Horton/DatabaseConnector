@@ -58,6 +58,10 @@ namespace DatabaseConnector.Services
 		{
 			Connect();
 
+			//Corrects boolean to string
+			Query = Query.Replace(", b'", ", '");
+			Query = Query.Replace("= b'", "= '");
+
 			SqliteCommand cmd = new SqliteCommand(Query, _connection);
 			cmd.ExecuteNonQuery();
 
@@ -67,6 +71,10 @@ namespace DatabaseConnector.Services
 		public DbDataReader ReadExecute(string Query)
 		{
 			Connect();
+
+			//Corrects boolean to string
+			Query = Query.Replace(", b'", ", '");
+			Query = Query.Replace("= b'", "= '");
 
 			SqliteCommand cmd = new SqliteCommand(Query, _connection);
 			DbDataReader dataReader = cmd.ExecuteReader();

@@ -1,8 +1,11 @@
-﻿using DatabaseConnector.Attributes;
+﻿using Azure.Core;
+using DatabaseConnector.Attributes;
 using DatabaseConnector.Models;
 using MySqlConnector;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Net.Http.Headers;
 using System.Reflection;
 
 namespace DatabaseConnector.Services
@@ -61,6 +64,10 @@ namespace DatabaseConnector.Services
 				else if (where.Value is int intVal)
 				{
 					query += $"{intVal} AND ";
+				}
+				else if (where.Value is long longVal)
+				{
+					query += $"{longVal} AND ";
 				}
 				else if (where.Value is bool boolVal)
 				{
@@ -217,12 +224,6 @@ namespace DatabaseConnector.Services
 				throw new Exception("Class must have table attribute!");
 			}
 
-			//			CREATE TABLE "tblFile"(
-			//				"FileId"    INTEGER NOT NULL,
-			//				"Name"	TEXT NOT NULL,
-			//				PRIMARY KEY("FileId" AUTOINCREMENT)
-			//			);
-
 			List<Property> properties = new List<Property>();
 
 			foreach (PropertyInfo propertyInfo in ClassPropertyInfo)
@@ -268,6 +269,271 @@ namespace DatabaseConnector.Services
 
 			//Executes query and returns a datareader for the data
 			_database.Execute(query);
+		}
+
+		public void Insert<T>(T Item)
+		{
+			Insert<T>(Item, false);
+		}
+
+		public void Insert<T>(T Item, bool InsertPrimaryKey)
+		{
+			Type classType = typeof(T);
+			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
+
+			//Gets the table attribute and gets the table name value from it
+			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			if (tableAttribute is null)
+			{
+				throw new Exception("Class must have table attribute!");
+			}
+
+			string table = tableAttribute.Name;
+
+			string properties = "";
+			string values = "";
+
+			foreach (PropertyInfo propertyInfo in ClassPropertyInfo)
+			{
+				string Name = propertyInfo.Name;
+
+				//Checks if the property should be included
+
+				if (!InsertPrimaryKey)
+				{
+					//Don't include if it's a primary key
+					PropertyType? primaryKeyAttribute = (PropertyType?)propertyInfo.GetCustomAttribute(typeof(PropertyType), false);
+					if (primaryKeyAttribute is not null && primaryKeyAttribute.IsPrimaryKey)
+					{
+						continue;
+					}
+				}
+
+				//If there are joins it's not part of this table
+				object[] joinAttributes = propertyInfo.GetCustomAttributes(typeof(Join), false);
+				if (joinAttributes.Length > 0)
+				{
+					continue;
+				}
+
+				//If table is different then it's not part of the table
+				SourceTable? sourceAttribute = (SourceTable?)propertyInfo.GetCustomAttribute(typeof(SourceTable), false);
+				if (sourceAttribute is not null && sourceAttribute.TableName != table)
+				{
+					continue;
+				}
+
+
+				//Changes the name to the correct one for the insert
+				NameCast? castAttribute = (NameCast?)propertyInfo.GetCustomAttribute(typeof(NameCast), false);
+				if (castAttribute is not null)
+				{
+					Name = castAttribute.Name;
+				}
+
+				//Works out value type
+				object value = propertyInfo.GetValue(Item);
+				if (value is string strVal)
+				{
+					values += $"'{MySqlHelper.EscapeString(strVal)}', ";
+				}
+				else if (value is int intVal)
+				{
+					values += $"{intVal}, ";
+				}
+				else if (value is long longVal)
+				{
+					values += $"{longVal}, ";
+				}
+				else if (value is bool boolVal)
+				{
+					values += $"b'{(boolVal ? '1' : '0')}', ";
+				}
+				else if (value is DateTime dateVal)
+				{
+					values += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+				}
+				else //Skip if type is unsupported
+				{
+					continue;
+				}
+
+				properties += $"{Name}, ";
+			}
+
+			//Removes extra ', ' off the end off properties and values
+			if (values.Length > 0)
+			{
+				properties = properties.Substring(0, properties.Length - 2);
+				values = values.Substring(0, values.Length - 2);
+			}
+
+			string query = $"INSERT INTO {table} ({properties}) VALUES ({values})";
+
+			_database.Execute(query);
+
+		}
+
+		public void Update<T>(T Item, Update UpdateRequest)
+		{
+			Type classType = typeof(T);
+			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
+
+			//Gets the table attribute and gets the table name value from it
+			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			if (tableAttribute is null)
+			{
+				throw new Exception("Class must have table attribute!");
+			}
+
+			string table = tableAttribute.Name;
+
+			string values = "";
+
+			foreach (PropertyInfo propertyInfo in ClassPropertyInfo)
+			{
+				string Name = propertyInfo.Name;
+
+				//Checks if the property should be included
+				//If there are joins it's not part of this table
+				object[] joinAttributes = propertyInfo.GetCustomAttributes(typeof(Join), false);
+				if (joinAttributes.Length > 0)
+				{
+					continue;
+				}
+				//If table is different then it's not part of the table
+				SourceTable? sourceAttribute = (SourceTable?)propertyInfo.GetCustomAttribute(typeof(SourceTable), false);
+				if (sourceAttribute is not null && sourceAttribute.TableName != table)
+				{
+					continue;
+				}
+
+
+				//Changes the name to the correct one for the insert
+				NameCast? castAttribute = (NameCast?)propertyInfo.GetCustomAttribute(typeof(NameCast), false);
+				if (castAttribute is not null)
+				{
+					Name = castAttribute.Name;
+				}
+
+
+				//If it's a primary key and isn't null then use it as a where statement
+				PropertyType? primaryKeyAttribute = (PropertyType?)propertyInfo.GetCustomAttribute(typeof(PropertyType), false);
+				if (primaryKeyAttribute is not null && primaryKeyAttribute.IsPrimaryKey)
+				{
+					if (propertyInfo.PropertyType == typeof(int) || propertyInfo.PropertyType == typeof(long)) //If the type is int or long
+					{
+						int intVal = int.Parse(propertyInfo.GetValue(Item)!.ToString()!);
+
+						//A Primary key shouldn't ever be 0
+						if (intVal != 0)
+						{
+							UpdateRequest.AddWhere(Name, intVal);
+						}
+					}
+					else if(propertyInfo.GetValue(Item) is not null && propertyInfo.GetValue(Item) != default)
+					{
+						UpdateRequest.AddWhere(Name, propertyInfo.GetValue(Item));
+					}
+
+					continue;
+				}
+
+
+				//Excludes the value if it hasn't been edited
+				//Has to be here due to it being after the primary key is added to the where statement
+				if (UpdateRequest.UseEditedValues && !UpdateRequest.EditedValues.Contains(Name))
+				{
+					continue;
+				}
+
+
+				//Works out value type
+				object value = propertyInfo.GetValue(Item);
+
+				string currentValue = "";
+				if (value is string strVal)
+				{
+					currentValue = $"'{MySqlHelper.EscapeString(strVal)}', ";
+				}
+				else if (value is int intVal)
+				{
+					currentValue = $"{intVal}, ";
+				}
+				else if (value is long longVal)
+				{
+					currentValue = $"{longVal}, ";
+				}
+				else if (value is bool boolVal)
+				{
+					currentValue = $"b'{(boolVal ? '1' : '0')}', ";
+				}
+				else if (value is DateTime dateVal)
+				{
+					currentValue = $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+				}
+				else //Skip if type is unsupported
+				{
+					continue;
+				}
+
+				values += $"{Name} = {currentValue}";
+			}
+
+			//Removes extra ', ' off the end off properties and values
+			if (values.Length > 0)
+			{
+				values = values.Substring(0, values.Length - 2);
+			}
+
+			string where = GetWheres(table, UpdateRequest.Wheres);
+
+			string query = $"UPDATE {table} SET {values} {where}";
+
+			_database.Execute(query);
+		}
+
+		public void Delete<T>(T Item)
+		{
+			Type classType = typeof(T);
+			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
+
+			//Gets the table attribute and gets the table name value from it
+			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			if (tableAttribute is null)
+			{
+				throw new Exception("Class must have table attribute!");
+			}
+
+			string table = tableAttribute.Name;
+
+			Where PrimaryKeyWhere = new Where("", "", "");
+
+			foreach (PropertyInfo property in ClassPropertyInfo)
+			{
+				PropertyType? typeAttribute = (PropertyType?)property.GetCustomAttribute(typeof(PropertyType), false);
+				if (typeAttribute is not null && typeAttribute.IsPrimaryKey)
+				{
+					string Name = property.Name;
+
+					NameCast? castAttribute = (NameCast?)property.GetCustomAttribute(typeof(NameCast), false);
+					if (castAttribute is not null)
+					{
+						Name = castAttribute.Name;
+					}
+
+					PrimaryKeyWhere = new Where("", Name, property.GetValue(Item)!);
+
+					break;
+				}
+			}
+
+			string where = GetWheres(table, new List<Where>() { PrimaryKeyWhere });
+
+			string query = $"DELETE FROM {table} {where}";
+
+			_database.Execute(query);
+
 		}
 	}
 }
