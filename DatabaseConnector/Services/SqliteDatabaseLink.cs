@@ -1,16 +1,16 @@
 ﻿using DatabaseConnector.Models;
-using Microsoft.Data.Sqlite;
 using System.Data.Common;
+using System.Data.SQLite;
 
 
 namespace DatabaseConnector.Services
 {
 	public class SqliteDatabaseLink : IDatabaseLink
 	{
-		private SqliteConnection _connection;
+		private SQLiteConnection _connection;
 		public SqliteDatabaseLink(string DatabaseString)
 		{
-			_connection = new SqliteConnection(DatabaseString);
+			_connection = new SQLiteConnection(DatabaseString);
 		}
 
 		public string BuildCreateTableQuery(List<Property> Properties)
@@ -35,9 +35,9 @@ namespace DatabaseConnector.Services
 
 				return true;
 			}
-			catch
+			catch (Exception e)
 			{
-				Console.WriteLine($"Failed to connect to database at {DateTime.Now}");
+				Console.WriteLine($"Failed to connect to database at {DateTime.Now} due to {e.ToString()}");
 				return false;
 			}
 		}
@@ -48,9 +48,9 @@ namespace DatabaseConnector.Services
 			{
 				_connection.Close();
 			}
-			catch
+			catch (Exception e)
 			{
-				Console.WriteLine($"Failed to close connection to database at {DateTime.Now}");
+				Console.WriteLine($"Failed to close connection to database at {DateTime.Now} due to {e.ToString()}");
 			}
 		}
 
@@ -62,7 +62,7 @@ namespace DatabaseConnector.Services
 			Query = Query.Replace(", b'", ", '");
 			Query = Query.Replace("= b'", "= '");
 
-			SqliteCommand cmd = new SqliteCommand(Query, _connection);
+			SQLiteCommand cmd = new SQLiteCommand(Query, _connection);
 			cmd.ExecuteNonQuery();
 
 			Disconnect();
@@ -76,7 +76,7 @@ namespace DatabaseConnector.Services
 			Query = Query.Replace(", b'", ", '");
 			Query = Query.Replace("= b'", "= '");
 
-			SqliteCommand cmd = new SqliteCommand(Query, _connection);
+			SQLiteCommand cmd = new SQLiteCommand(Query, _connection);
 			DbDataReader dataReader = cmd.ExecuteReader();
 
 			return dataReader;
