@@ -31,6 +31,11 @@ namespace DatabaseConnector.Services
 					_database = new SqliteDatabaseLink(DatabaseString);
 
 					break;
+
+				case DatabaseType.MSqlite:
+					_database = new MSqliteDatabaseLink(DatabaseString);
+
+					break;
 			}
 		}
 
@@ -59,7 +64,7 @@ namespace DatabaseConnector.Services
 				//Fills in the value
 				if (where.Value is string strVal)
 				{
-					query += $"'{MySqlHelper.EscapeString(strVal)}' AND ";
+					query += $"'{_database.EscapeString(strVal)}' AND ";
 				}
 				else if (where.Value is int intVal)
 				{
@@ -335,7 +340,7 @@ namespace DatabaseConnector.Services
 				object value = propertyInfo.GetValue(Item);
 				if (value is string strVal)
 				{
-					values += $"'{MySqlHelper.EscapeString(strVal)}', ";
+					values += $"'{_database.EscapeString(strVal)}', ";
 				}
 				else if (value is int intVal)
 				{
@@ -454,7 +459,7 @@ namespace DatabaseConnector.Services
 				string currentValue = "";
 				if (value is string strVal)
 				{
-					currentValue = $"'{MySqlHelper.EscapeString(strVal)}', ";
+					currentValue = $"'{_database.EscapeString(strVal)}', ";
 				}
 				else if (value is int intVal)
 				{

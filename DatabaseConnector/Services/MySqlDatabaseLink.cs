@@ -78,5 +78,9 @@ namespace DatabaseConnector.Services
 
 			return dataReader;
 		}
+		public string EscapeString(string Value)
+		{
+			return MySqlHelper.EscapeString(Value);
+		}
 	}
 }

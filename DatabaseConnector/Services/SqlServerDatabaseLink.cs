@@ -1,5 +1,6 @@
 ﻿using DatabaseConnector.Models;
 using Microsoft.Data.SqlClient;
+using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -77,6 +78,11 @@ namespace DatabaseConnector.Services
 			DbDataReader dataReader = cmd.ExecuteReader();
 
 			return dataReader;
+		}
+
+		public string EscapeString(string Value)
+		{
+			return MySqlHelper.EscapeString(Value);
 		}
 	}
 }

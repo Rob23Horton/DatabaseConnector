@@ -10,6 +10,7 @@ namespace DatabaseConnector.Models
 	{
 		MySql,
 		SqlServer,
-		Sqlite
+		Sqlite,
+		MSqlite
 	}
 }

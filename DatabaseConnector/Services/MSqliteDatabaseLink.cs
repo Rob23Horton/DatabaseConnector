@@ -1,16 +1,17 @@
 ﻿using DatabaseConnector.Models;
 using System.Data.Common;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 
 
 namespace DatabaseConnector.Services
 {
-	public class SqliteDatabaseLink : IDatabaseLink
+	public class MSqliteDatabaseLink : IDatabaseLink
 	{
-		private SQLiteConnection _connection;
-		public SqliteDatabaseLink(string DatabaseString)
+		private SqliteConnection _connection;
+		public MSqliteDatabaseLink(string DatabaseString)
 		{
-			_connection = new SQLiteConnection(DatabaseString);
+			SQLitePCL.Batteries.Init();
+			_connection = new SqliteConnection(DatabaseString);
 		}
 
 		public string BuildCreateTableQuery(List<Property> Properties)
@@ -62,7 +63,9 @@ namespace DatabaseConnector.Services
 			Query = Query.Replace(", b'", ", '");
 			Query = Query.Replace("= b'", "= '");
 
-			SQLiteCommand cmd = new SQLiteCommand(Query, _connection);
+			//File.AppendAllText("D:/2025/ConsoleOutput.txt", $"Query - {Query} at {DateTime.Now}\n");
+
+			SqliteCommand cmd = new SqliteCommand(Query, _connection);
 			cmd.ExecuteNonQuery();
 
 			Disconnect();
@@ -76,7 +79,9 @@ namespace DatabaseConnector.Services
 			Query = Query.Replace(", b'", ", '");
 			Query = Query.Replace("= b'", "= '");
 
-			SQLiteCommand cmd = new SQLiteCommand(Query, _connection);
+			//File.AppendAllText("D:/2025/ConsoleOutput.txt", $"Read Query - {Query} at {DateTime.Now}\n");
+
+			SqliteCommand cmd = new SqliteCommand(Query, _connection);
 			DbDataReader dataReader = cmd.ExecuteReader();
 
 			return dataReader;
@@ -86,5 +91,6 @@ namespace DatabaseConnector.Services
 		{
 			return Value.Replace("'", "''");
 		}
+
 	}
 }

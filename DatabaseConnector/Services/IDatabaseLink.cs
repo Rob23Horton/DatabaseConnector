@@ -10,5 +10,6 @@ namespace DatabaseConnector.Services
 		public void Execute(string Query);
 		public void Disconnect();
 		public string BuildCreateTableQuery(List<Property> Properties);
+		public string EscapeString(string Value);
 	}
 }
