@@ -122,6 +122,13 @@ namespace DatabaseConnector.Services
 				string Name = propertyInfo.Name;
 				string As = "";
 
+				//If it's got Ignore then it doesn't need to be selected
+				Ignore? ignoreAttribute = (Ignore?)propertyInfo.GetCustomAttribute(typeof(Ignore), false);
+				if (ignoreAttribute is not null)
+				{
+					continue;
+				}
+
 				//Adds As value to query so that it can be found when creating object
 				NameCast? castAttribute = (NameCast?)propertyInfo.GetCustomAttribute(typeof(NameCast), false);
 				if (castAttribute is not null)
@@ -240,6 +247,13 @@ namespace DatabaseConnector.Services
 					continue;
 				}
 
+				//If it's got Ignore then it doesn't need to be created
+				Ignore? ignoreAttribute = (Ignore?)propertyInfo.GetCustomAttribute(typeof(Ignore), false);
+				if (ignoreAttribute is not null)
+				{
+					continue;
+				}
+
 				Property newProperty = new Property();
 
 				//Name which is used as the property name on the table
@@ -303,6 +317,13 @@ namespace DatabaseConnector.Services
 				string Name = propertyInfo.Name;
 
 				//Checks if the property should be included
+
+				//If it's got Ignore then it doesn't need to be inserted
+				Ignore? ignoreAttribute = (Ignore?)propertyInfo.GetCustomAttribute(typeof(Ignore), false);
+				if (ignoreAttribute is not null)
+				{
+					continue;
+				}
 
 				if (!InsertPrimaryKey)
 				{
@@ -400,6 +421,14 @@ namespace DatabaseConnector.Services
 				string Name = propertyInfo.Name;
 
 				//Checks if the property should be included
+
+				//If it's got Ignore then it doesn't need to be updated
+				Ignore? ignoreAttribute = (Ignore?)propertyInfo.GetCustomAttribute(typeof(Ignore), false);
+				if (ignoreAttribute is not null)
+				{
+					continue;
+				}
+
 				//If there are joins it's not part of this table
 				object[] joinAttributes = propertyInfo.GetCustomAttributes(typeof(Join), false);
 				if (joinAttributes.Length > 0)
