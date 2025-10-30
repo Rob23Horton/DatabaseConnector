@@ -1,6 +1,6 @@
 ﻿using MySqlConnector;
 
-namespace DatabaseConnector.Services;
+namespace DataBox.Services;
 
 public class MySqlDatabase : 
 	Database<MySqlDatabase, MySqlConnection>, 

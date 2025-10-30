@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 
-namespace DatabaseConnector.Services;
+namespace DataBox.Services;
 
 public class SqliteDatabase : 
 	Database<SqliteDatabase, SqliteConnection>, 

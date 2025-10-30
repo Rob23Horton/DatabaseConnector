@@ -1,17 +1,16 @@
-﻿using DatabaseConnector.Models;
-using System.Data.Common;
-using Microsoft.Data.Sqlite;
+﻿using System.Data.Common;
+using System.Data.SQLite;
+using DataBox.Models;
 
 
-namespace DatabaseConnector.Services
+namespace DataBox.Services
 {
-	public class MSqliteDatabaseLink : IDatabaseLink
+	public class SqliteDatabaseLink : IDatabaseLink
 	{
-		private SqliteConnection _connection;
-		public MSqliteDatabaseLink(string DatabaseString)
+		private SQLiteConnection _connection;
+		public SqliteDatabaseLink(string DatabaseString)
 		{
-			SQLitePCL.Batteries.Init();
-			_connection = new SqliteConnection(DatabaseString);
+			_connection = new SQLiteConnection(DatabaseString);
 		}
 
 		public string BuildCreateTableQuery(List<Property> Properties)
@@ -63,9 +62,7 @@ namespace DatabaseConnector.Services
 			Query = Query.Replace(", b'", ", '");
 			Query = Query.Replace("= b'", "= '");
 
-			//File.AppendAllText("D:/2025/ConsoleOutput.txt", $"Query - {Query} at {DateTime.Now}\n");
-
-			SqliteCommand cmd = new SqliteCommand(Query, _connection);
+			SQLiteCommand cmd = new SQLiteCommand(Query, _connection);
 			cmd.ExecuteNonQuery();
 
 			Disconnect();
@@ -79,9 +76,7 @@ namespace DatabaseConnector.Services
 			Query = Query.Replace(", b'", ", '");
 			Query = Query.Replace("= b'", "= '");
 
-			//File.AppendAllText("D:/2025/ConsoleOutput.txt", $"Read Query - {Query} at {DateTime.Now}\n");
-
-			SqliteCommand cmd = new SqliteCommand(Query, _connection);
+			SQLiteCommand cmd = new SQLiteCommand(Query, _connection);
 			DbDataReader dataReader = cmd.ExecuteReader();
 
 			return dataReader;
@@ -91,6 +86,5 @@ namespace DatabaseConnector.Services
 		{
 			return Value.Replace("'", "''");
 		}
-
 	}
 }

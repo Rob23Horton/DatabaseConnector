@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
-using DatabaseConnector.Models;
+using DataBox.Models;
 
-namespace DatabaseConnector.Services
+namespace DataBox.Services
 {
 	internal interface IDatabaseLink
 	{

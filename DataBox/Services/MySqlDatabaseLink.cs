@@ -5,10 +5,10 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DatabaseConnector.Models;
+using DataBox.Models;
 using MySqlConnector;
 
-namespace DatabaseConnector.Services
+namespace DataBox.Services
 {
 	public class MySqlDatabaseLink : IDatabaseLink
 	{

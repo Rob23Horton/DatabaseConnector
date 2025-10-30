@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DatabaseConnector.Attributes
+namespace DataBox.Attributes
 {
 	[AttributeUsage(AttributeTargets.Property)]
 	public class Ignore : Attribute

@@ -1,5 +1,4 @@
-﻿using DatabaseConnector.Models;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
@@ -7,9 +6,10 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DataBox.Models;
 
 
-namespace DatabaseConnector.Services
+namespace DataBox.Services
 {
 	public class SqlServerDatabaseLink : IDatabaseLink
 	{

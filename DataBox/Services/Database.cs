@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 
-namespace DatabaseConnector.Services;
+namespace DataBox.Services;
 
 public static class Database
 {

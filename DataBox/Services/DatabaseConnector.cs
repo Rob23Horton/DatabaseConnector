@@ -1,14 +1,14 @@
 ﻿using Azure.Core;
-using DatabaseConnector.Attributes;
-using DatabaseConnector.Models;
 using MySqlConnector;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Net.Http.Headers;
 using System.Reflection;
+using DataBox.Attributes;
+using DataBox.Models;
 
-namespace DatabaseConnector.Services
+namespace DataBox.Services
 {
 	public class DatabaseConnector : IDatabaseConnector
 	{
@@ -102,7 +102,7 @@ namespace DatabaseConnector.Services
 			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
 
 			//Gets the table attribute and gets the table name value from it
-			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			TableAttribute? tableAttribute = (TableAttribute?)classType.GetCustomAttribute(typeof(TableAttribute), false);
 			if (tableAttribute is null)
 			{
 				throw new Exception("Class must have table attribute!");
@@ -230,7 +230,7 @@ namespace DatabaseConnector.Services
 			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
 
 			//Gets the table attribute and gets the table name value from it
-			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			TableAttribute? tableAttribute = (TableAttribute?)classType.GetCustomAttribute(typeof(TableAttribute), false);
 			if (tableAttribute is null)
 			{
 				throw new Exception("Class must have table attribute!");
@@ -301,7 +301,7 @@ namespace DatabaseConnector.Services
 			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
 
 			//Gets the table attribute and gets the table name value from it
-			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			TableAttribute? tableAttribute = (TableAttribute?)classType.GetCustomAttribute(typeof(TableAttribute), false);
 			if (tableAttribute is null)
 			{
 				throw new Exception("Class must have table attribute!");
@@ -406,7 +406,7 @@ namespace DatabaseConnector.Services
 			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
 
 			//Gets the table attribute and gets the table name value from it
-			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			TableAttribute? tableAttribute = (TableAttribute?)classType.GetCustomAttribute(typeof(TableAttribute), false);
 			if (tableAttribute is null)
 			{
 				throw new Exception("Class must have table attribute!");
@@ -533,7 +533,7 @@ namespace DatabaseConnector.Services
 			PropertyInfo[] ClassPropertyInfo = classType.GetProperties();
 
 			//Gets the table attribute and gets the table name value from it
-			Table? tableAttribute = (Table?)classType.GetCustomAttribute(typeof(Table), false);
+			TableAttribute? tableAttribute = (TableAttribute?)classType.GetCustomAttribute(typeof(TableAttribute), false);
 			if (tableAttribute is null)
 			{
 				throw new Exception("Class must have table attribute!");

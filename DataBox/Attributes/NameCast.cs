@@ -4,16 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DatabaseConnector.Attributes
+namespace DataBox.Attributes
 {
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple=false)]
-	public class SourceTable : Attribute
+	public class NameCast : Attribute
 	{
-		public SourceTable(string TableName)
+		public NameCast(string Name)
 		{
-			this.TableName = TableName;
+			this.Name = Name;
 		}
 
-		public string TableName { get; set; }
+		public string Name { get; set; }
 	}
 }
