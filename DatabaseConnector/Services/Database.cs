@@ -1,4 +1,6 @@
-﻿namespace DatabaseConnector.Services;
+﻿using System.Data.Common;
+
+namespace DatabaseConnector.Services;
 
 public static class Database
 {
@@ -6,7 +8,11 @@ public static class Database
 	public static ISqliteDatabaseFileSelectionStage UseSqlite() => SqliteDatabase.CreateConnection();
 }
 
-public abstract class Database<TSelf, TConnection> : IConnectStage<TSelf> where TSelf : Database<TSelf, TConnection>
+public abstract class Database<TSelf, TConnection> : 
+	IConnectStage<TSelf>,
+	IDisposable
+	where TSelf : Database<TSelf, TConnection> 
+	where TConnection : DbConnection
 {
 	protected TConnection? Connection { get; private set; }
 	
@@ -15,7 +21,14 @@ public abstract class Database<TSelf, TConnection> : IConnectStage<TSelf> where 
 	{
 		Connect(out var conn);
 		Connection = conn;
+		Connection.Open();
 		return (TSelf)this;
+	}
+
+	void IDisposable.Dispose()
+	{
+		Connection?.Close();
+		GC.SuppressFinalize(this);
 	}
 }
 
