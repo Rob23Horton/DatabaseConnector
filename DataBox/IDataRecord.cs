@@ -1,6 +1,6 @@
 ﻿namespace DataBox;
 
-public interface IDataRecord
+public interface IDataRecord<T>
 {
-	
+	public DataConfig GetConfig();
 }
